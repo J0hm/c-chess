@@ -6,16 +6,16 @@
 
 typedef uint64_t bb64;
 
-enum PieceType {
+typedef enum {
     EMPTY, W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
     B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING, INVALID
-};
+} PieceType;
 
-enum Side {
+typedef enum {
     WHITE, BLACK
-};
+} Side;
 
-enum Square {
+typedef enum {
     A1, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
@@ -24,6 +24,8 @@ enum Square {
     A6, B6, C6, D6, E6, F6, G6, H6,
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8, ER
-};
+} Square;
+
+#define PIECE_SIDE(p) (p > W_KING)
 
 #endif
