@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include "util.h"
+#include "constants.h"
 
 int main(int argc, char *argv[]) {
 
-    printf("Hello, World! Our value is %d\n", get_value());
+    printbb(bitboard_masks[H8]);
     return 0;
 }

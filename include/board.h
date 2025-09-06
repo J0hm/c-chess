@@ -23,10 +23,14 @@ typedef struct {
 
     // 64-bit bitboards
     // see PieceType for indexing
-    // 13 for "empty" pieces
-    uint64_t pcbb[13];
-    uint64_t occupied[2];        // occupied squares by each color
+    // size 13 because of 12 pieces + empty square
+    bb64 pcbb[13];
+    bb64 occupied[2];            // occupied squares by each color
     enum PieceType squares[64];  // which piece is on which square
 } board_t;
+
+/// @brief Initializes a new board to the starting position
+/// @param board 
+void init_board(board_t *board);
 
 #endif
