@@ -55,4 +55,22 @@ int set_fen(board_t *board, char *fen);
 /// @param board
 void print_board(board_t *board);
 
+/// @brief Checks if two boards are equal by comparing their bitboards. Only checks piece placement, nothing else.
+/// @param b1 
+/// @param b2 
+/// @return 1 if equal, 0 otherwise
+int board_equal_bb(board_t *b1, board_t *b2);
+
+/// @brief Checks if two boards are equal by comparing their hashes. Does not check for collisions.
+/// @param b1 
+/// @param b2 
+/// @return 1 if equal, 0 otherwise
+int board_equal_hash(board_t *b1, board_t *b2);
+
+/// @brief Checks if two boards are exactly equal - bitboards, castling rights, side to move, etc
+/// @param b1 
+/// @param b2 
+/// @return 1 if equal, 0 otherwise
+int board_equal_exact(board_t *b1, board_t *b2);
+
 #endif

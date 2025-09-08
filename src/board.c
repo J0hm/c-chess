@@ -195,13 +195,13 @@ int parse_en_passant(board_t* pos, const char* en_passant) {
     }
 
     int square = str_to_square(en_passant);
-    if (square == -1) return -1;
+    if (square < 0) return -1;
 
     int rank = square / 8;
     if (rank != 2 && rank != 5) return -1;
 
     pos->enPassantSquare = square;
-    return -1;
+    return 0;
 }
 
 // public FEN parsing function

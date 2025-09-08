@@ -86,13 +86,191 @@ void test_init(void) {
 void test_set_fen(void) {
     board_t board;
     init_board(&board);
+    int ret = 0;
 
-    // TODO test some other starting positions, including some with en passant
-    // and a variety of castling
+    // en passant available (e3 square)
+    ret = set_fen(
+        &board, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(BLACK, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(E3, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // en passant available (d6 square)
+    ret = set_fen(
+        &board, "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(D6, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(3, board.fullMoves);
+
+    // no castling rights
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w - - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // white kingside castling
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R b K - 5 10");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x1, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(5, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(10, board.fullMoves);
+
+    // black queenside castling
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w q - 25 50");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x8, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(25, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(50, board.fullMoves);
+
+    // mixed castling rights
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R b Kq - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x9, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // high move numbers
+    ret = set_fen(&board, "8/8/8/8/8/8/8/4K3 w - - 99 150");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(99, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(150, board.fullMoves);
+
+    // en passant on a-file
+    ret = set_fen(
+        &board, "rnbqkbnr/1ppppppp/8/pP6/8/8/P1PPPPPP/RNBQKBNR w KQkq a6 0 3");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(A6, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(3, board.fullMoves);
+
+    // en passant on h-file
+    ret = set_fen(
+        &board, "rnbqkbnr/pppppp1p/8/6Pp/8/8/PPPPPP1P/RNBQKBNR w KQkq h6 0 3");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(H6, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(3, board.fullMoves);
+
+    // complex middle game position
+    ret = set_fen(
+        &board,
+        "r1bqk2r/pp2nppp/2n1p3/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 2 8");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(2, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(8, board.fullMoves);
+
+    // pPromoted queen
+    ret = set_fen(&board, "r1bQk2r/pp2nppp/2n1p3/8/8/8/8/4K3 w - - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // all castling rights
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // white queenside only
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R b Q - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x2, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
+
+    // black kingside only
+    ret = set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w k - 10 25");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x4, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(10, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(25, board.fullMoves);
+
+    // 50-Move rule edge case
+    ret = set_fen(&board, "8/8/8/8/8/8/8/4K3 b - - 50 100");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(50, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(100, board.fullMoves);
+
+    // en passant on e6 (black pawn moved)
+    ret = set_fen(
+        &board, "rnbqkbnr/pppp1ppp/8/4pP2/8/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(E6, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(2, board.fullMoves);
+
+    // en passant on c3 (white pawn can capture)
+    ret = set_fen(
+        &board, "rnbqkbnr/pp1ppppp/8/8/2Pp4/8/PP1PPPPP/RNBQKBNR b KQkq c3 0 2");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(1, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(C3, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(2, board.fullMoves);
+
+    // maximum fullmove number
+    ret = set_fen(&board, "8/8/8/8/8/8/8/4K3 w - - 0 999");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(999, board.fullMoves);
+
+    // multiple promoted pieces
+    ret = set_fen(&board, "2Q1Q3/8/8/8/8/8/8/4K3 w - - 0 1");
+    TEST_ASSERT_FALSE(ret);
+    TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
+    TEST_ASSERT_EQUAL_UINT8(0x0, board.castlingRights);
+    TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
+    TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
+    TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
 }
 
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_init);
+    RUN_TEST(test_set_fen);
     return UNITY_END();
 }

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude -Ilib/unity -MMD -MP
+CFLAGS = -Wall -Wextra -Iinclude -Ilib/unity -MMD -MP -O3
 SRC_DIR = src
 INC_DIR = include
 TEST_DIR = test
