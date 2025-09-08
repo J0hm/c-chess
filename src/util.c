@@ -24,3 +24,9 @@ void printbb(bb64 bb) {
     printf("    A   B   C   D   E   F   G   H\n");
     printf("\n");
 }
+
+int pop_lsb(uint64_t *bb) {
+    int lsb = __builtin_ctzll(*bb);
+    *bb &= *bb - 1;
+    return lsb;
+}
