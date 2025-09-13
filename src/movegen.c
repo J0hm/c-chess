@@ -435,6 +435,7 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
                  (rank_src == 7 && side == BLACK)) &&  // black double push
                 SQUARE_VALID(target) &&
                 board->squares[target] == EMPTY) {
+                MOVE32_SET_DST(move.move32, target);
                 MOVE32_SET_FLAGS(move.move32, MOVE_FLAG_DOUBLE_PAWN_PUSH);
                 rate_move(board, &move);
                 movelist_add(moves, move);
@@ -461,15 +462,131 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
     }
 }
 
-void generate_knight_moves(board_t *board, movelist_t *moves) {}
+void generate_knight_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_KNIGHT + side * 6;
+    PieceType captured = EMPTY;
+    bb64 pcbb = board->pcbb[moved];
 
-void generate_king_moves(board_t *board, movelist_t *moves) {}
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        move_t move;
 
-void generate_rook_moves(board_t *board, movelist_t *moves) {}
+        bb64 attacks = get_knight_attacks(src) & ~board->occupied[side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
 
-void generate_bishop_moves(board_t *board, movelist_t *moves) {}
+            move = create_move(
+                src, target, moved, captured, board->castlingRights,
+                captured == EMPTY ? MOVE_FLAG_QUITE : MOVE_FLAG_QUITE);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
 
-void generate_queen_moves(board_t *board, movelist_t *moves) {}
+void generate_king_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_KING + side * 6;
+    PieceType captured = EMPTY;
+    bb64 pcbb = board->pcbb[moved];
+
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        move_t move;
+        bb64 attacks = get_king_attacks(src) & ~board->occupied[side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
+
+            move = create_move(
+                src, target, moved, captured, board->castlingRights,
+                captured == EMPTY ? MOVE_FLAG_QUITE : MOVE_FLAG_QUITE);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
+
+void generate_rook_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_ROOK + side * 6;
+    PieceType captured = EMPTY;
+    bb64 pcbb = board->pcbb[moved];
+
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        move_t move;
+        bb64 occupied = board->occupied[side] | board->occupied[!side];
+        bb64 attacks = get_rook_attacks(src, occupied) & ~board->occupied[side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
+
+            move = create_move(
+                src, target, moved, captured, board->castlingRights,
+                captured == EMPTY ? MOVE_FLAG_QUITE : MOVE_FLAG_QUITE);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
+
+void generate_bishop_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_BISHOP + side * 6;
+    PieceType captured = EMPTY;
+    bb64 pcbb = board->pcbb[moved];
+
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        move_t move;
+        bb64 occupied = board->occupied[side] | board->occupied[!side];
+        bb64 attacks =
+            get_bishop_attacks(src, occupied) & ~board->occupied[side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
+
+            move = create_move(
+                src, target, moved, captured, board->castlingRights,
+                captured == EMPTY ? MOVE_FLAG_QUITE : MOVE_FLAG_QUITE);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
+
+void generate_queen_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_QUEEN + side * 6;
+    PieceType captured = EMPTY;
+    bb64 pcbb = board->pcbb[moved];
+
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        move_t move;
+        bb64 occupied = board->occupied[side] | board->occupied[!side];
+        bb64 attacks =
+            get_queen_attacks(src, occupied) & ~board->occupied[side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
+
+            move = create_move(
+                src, target, moved, captured, board->castlingRights,
+                captured == EMPTY ? MOVE_FLAG_QUITE : MOVE_FLAG_QUITE);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
 
 void generate_castling_moves(board_t *board, movelist_t *moves) {}
 

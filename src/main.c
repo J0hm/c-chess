@@ -11,11 +11,13 @@ int main(int argc, char *argv[]) {
     init_board(&board);
     initialize_movegen();
 
-    // set_fen(&board, "8/8/8/8/8/8/4P3/8 w - - 0 1");
+    set_fen(&board, "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
     print_board(&board);
     
     generate_moves(&board, &moves);
     
     movelist_print(&moves);
+
+    printf("generated %d moves\n", moves.moveCount);
     return 0;
 }
