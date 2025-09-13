@@ -55,8 +55,19 @@ uint64_t get_knight_attacks(Square square);
 /// @return bitboard of attacks
 uint64_t get_king_attacks(Square square);
 
+/// @brief Returns bishop attack bitboard
+/// @param square square the bishop is on
+/// @param occupied bitboard of occupied squares
 uint64_t get_bishop_attacks(Square square, uint64_t occupied);
+
+/// @brief Returns rook attack bitboard
+/// @param square square the rook is on
+/// @param occupied bitboard of occupied squares
 uint64_t get_rook_attacks(Square square, uint64_t occupied);
+
+/// @brief Returns queen attack bitboard
+/// @param square square the queen is on
+/// @param occupied bitboard of occupied squares
 uint64_t get_queen_attacks(Square square, uint64_t occupied);
 
 /// @brief Rates a move for move ordering
