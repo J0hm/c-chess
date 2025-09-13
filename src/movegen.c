@@ -1,5 +1,6 @@
 #include "movegen.h"
 
+#include "constants.h"
 #include "util.h"
 
 static uint64_t knightAttacks[64];
@@ -366,6 +367,44 @@ uint64_t get_queen_attacks(Square square, uint64_t occupied) {
            get_bishop_attacks(square, occupied);
 }
 
+static uint64_t get_attack_bitboard(board_t *board, Side side) {
+    bb64 occupied = board->occupied[side] | board->occupied[!side];
+    bb64 attacks = 0;
+    bb64 pcbb;
+
+    pcbb = board->pcbb[W_PAWN + side * 6];
+    while (pcbb) {
+        attacks |= get_pawn_attacks(pop_lsb(&pcbb), side);
+    }
+
+    pcbb = board->pcbb[W_KNIGHT + side * 6];
+    while (pcbb) {
+        attacks |= get_knight_attacks(pop_lsb(&pcbb));
+    }
+
+    pcbb = board->pcbb[W_BISHOP + side * 6];
+    while (pcbb) {
+        attacks |= get_bishop_attacks(pop_lsb(&pcbb), occupied);
+    }
+
+    pcbb = board->pcbb[W_ROOK + side * 6];
+    while (pcbb) {
+        attacks |= get_rook_attacks(pop_lsb(&pcbb), occupied);
+    }
+
+    pcbb = board->pcbb[W_QUEEN + side * 6];
+    while (pcbb) {
+        attacks |= get_queen_attacks(pop_lsb(&pcbb), occupied);
+    }
+
+    pcbb = board->pcbb[W_KING + side * 6];
+    while (pcbb) {
+        attacks |= get_king_attacks(pop_lsb(&pcbb));
+    }
+
+    return attacks;
+}
+
 static void add_promo_variations(board_t *board, movelist_t *moves,
                                  move_t move) {
     uint8_t existingFlags = MOVE32_FLAGS(move.move32);
@@ -396,7 +435,6 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
         Square src = pop_lsb(&pcbb);
         Square target;
         uint8_t rank_src = src / 8;
-        uint8_t file_src = src % 8;
         uint8_t rank_target = rank_src + 1;
 
         // add attacking moves
@@ -468,7 +506,7 @@ void generate_knight_moves(board_t *board, movelist_t *moves) {
     PieceType captured = EMPTY;
     bb64 pcbb = board->pcbb[moved];
 
-    while (pcbb) {  // loop over all pawns of side to move
+    while (pcbb) {  // loop over all knights of side to move
         Square src = pop_lsb(&pcbb);
         Square target;
         move_t move;
@@ -493,7 +531,7 @@ void generate_king_moves(board_t *board, movelist_t *moves) {
     PieceType captured = EMPTY;
     bb64 pcbb = board->pcbb[moved];
 
-    while (pcbb) {  // loop over all pawns of side to move
+    while (pcbb) {  // loop over all kings of side to move
         Square src = pop_lsb(&pcbb);
         Square target;
         move_t move;
@@ -517,7 +555,7 @@ void generate_rook_moves(board_t *board, movelist_t *moves) {
     PieceType captured = EMPTY;
     bb64 pcbb = board->pcbb[moved];
 
-    while (pcbb) {  // loop over all pawns of side to move
+    while (pcbb) {  // loop over all rooks of side to move
         Square src = pop_lsb(&pcbb);
         Square target;
         move_t move;
@@ -542,7 +580,7 @@ void generate_bishop_moves(board_t *board, movelist_t *moves) {
     PieceType captured = EMPTY;
     bb64 pcbb = board->pcbb[moved];
 
-    while (pcbb) {  // loop over all pawns of side to move
+    while (pcbb) {  // loop over all bishops of side to move
         Square src = pop_lsb(&pcbb);
         Square target;
         move_t move;
@@ -568,7 +606,7 @@ void generate_queen_moves(board_t *board, movelist_t *moves) {
     PieceType captured = EMPTY;
     bb64 pcbb = board->pcbb[moved];
 
-    while (pcbb) {  // loop over all pawns of side to move
+    while (pcbb) {  // loop over all queens of side to move
         Square src = pop_lsb(&pcbb);
         Square target;
         move_t move;
@@ -588,7 +626,104 @@ void generate_queen_moves(board_t *board, movelist_t *moves) {
     }
 }
 
-void generate_castling_moves(board_t *board, movelist_t *moves) {}
+int is_square_attacked_by(board_t *board, Square square, Side side) {
+    return bitboard_masks[square] & get_attack_bitboard(board, side);
+}
+
+static int can_castle_kingside(board_t *board, Side side) {
+    // check rights
+    uint8_t required_right =
+        (side == WHITE) ? CASTLE_WHITE_KING : CASTLE_BLACK_KING;
+    if (!(board->castlingRights & required_right)) return 0;
+
+    // check squares
+    Square f_square = (side == WHITE) ? F1 : F8;
+    Square g_square = (side == WHITE) ? G1 : G8;
+
+    if (board->squares[f_square] != EMPTY || board->squares[g_square] != EMPTY)
+        return 0;
+
+    // ensure rook and king in correct spots
+    Square king_square = (side == WHITE) ? E1 : E8;
+    Square rook_square = (side == WHITE) ? H1 : H8;
+
+    if (board->squares[king_square] != (W_KING + side * 6) ||
+        board->squares[rook_square] != (W_ROOK + side * 6))
+        return 0;
+
+    // ensure f and g are not attacked
+    if (is_square_attacked_by(board, f_square, (~side)&1) ||
+        is_square_attacked_by(board, g_square, (~side)&1))
+        return 0;
+
+    return 1;
+}
+
+static int can_castle_queenside(board_t *board, Side side) {
+    // check rights
+    uint8_t required_right =
+        (side == WHITE) ? CASTLE_WHITE_QUEEN : CASTLE_BLACK_QUEEN;
+    if (!(board->castlingRights & required_right)) return 0;
+
+    // check squares
+    Square b_square = (side == WHITE) ? B1 : B8;
+    Square c_square = (side == WHITE) ? C1 : C8;
+    Square d_square = (side == WHITE) ? D1 : D8;
+
+    if (board->squares[b_square] != EMPTY ||
+        board->squares[c_square] != EMPTY || board->squares[d_square] != EMPTY)
+        return 0;
+
+    // ensure rook and king in correct spots
+    Square king_square = (side == WHITE) ? E1 : E8;
+    Square rook_square = (side == WHITE) ? A1 : A8;
+
+    if (board->squares[king_square] != (W_KING + side * 6) ||
+        board->squares[rook_square] != (W_ROOK + side * 6)) {
+        return 0;
+    }
+
+    // check squares c and d are not attacked
+    if (is_square_attacked_by(board, c_square, !side) ||
+        is_square_attacked_by(board, d_square, !side)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+void generate_castling_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+
+    if (board->inCheck) return;
+
+    printf("generating castling moves\n");
+
+    // check kingside castling
+    if (can_castle_kingside(board, side)) {
+        printf("can castle kingside\n");
+        Square king_from = (side == WHITE) ? E1 : E8;
+        Square king_to = (side == WHITE) ? G1 : G8;
+
+        move_t move = create_move(king_from, king_to, W_KING + side * 6, EMPTY,
+                                  board->castlingRights, MOVE_FLAG_KING_CASTLE);
+        rate_move(board, &move);
+        movelist_add(moves, move);
+    }
+
+    // check queenside castling
+    if (can_castle_queenside(board, side)) {
+        printf("can castle queenside\n");
+        Square king_from = (side == WHITE) ? E1 : E8;
+        Square king_to = (side == WHITE) ? C1 : C8;
+
+        move_t move =
+            create_move(king_from, king_to, W_KING + side * 6, EMPTY,
+                        board->castlingRights, MOVE_FLAG_QUEEN_CASTLE);
+        rate_move(board, &move);
+        movelist_add(moves, move);
+    }
+}
 
 void generate_moves(board_t *board, movelist_t *moves) {
     generate_pawn_moves(board, moves);

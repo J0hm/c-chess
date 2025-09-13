@@ -70,6 +70,12 @@ uint64_t get_rook_attacks(Square square, uint64_t occupied);
 /// @param occupied bitboard of occupied squares
 uint64_t get_queen_attacks(Square square, uint64_t occupied);
 
+/// @brief Checks if square on given side is being attacked
+/// @param board pointer to board
+/// @param square square to check
+/// @param side check if the square on this side is attacked
+int is_square_attacked_by(board_t *board, Square square, Side side);
+
 /// @brief Rates a move for move ordering
 /// @param move to rate
 void rate_move(board_t *board, move_t *move);
