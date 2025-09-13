@@ -8,11 +8,6 @@
 #include "move.h"
 #include "types.h"
 
-#define CASTLE_WHITE_KING (1 << 0)
-#define CASTLE_WHITE_QUEEN (1 << 1)
-#define CASTLE_BLACK_KING (1 << 2)
-#define CASTLE_BLACK_QUEEN (1 << 3)
-
 #define MAX_GAME_LENGTH 256
 
 typedef struct {
@@ -61,6 +56,12 @@ void init_board(board_t *board);
 /// @param board
 /// @return 0 on success
 int clear_board(board_t *board);
+
+/// @brief Sets a piece on the board
+/// @param board
+/// @param sq
+/// @param piece
+void set_piece(board_t *board, Square sq, PieceType piece);
 
 /// @brief Sets the board state from a FEN string
 /// @param board

@@ -366,5 +366,133 @@ uint64_t get_queen_attacks(Square square, uint64_t occupied) {
            get_bishop_attacks(square, occupied);
 }
 
+static void add_promo_variations(board_t *board, movelist_t *moves,
+                                 move_t move) {
+    uint8_t existingFlags = MOVE32_FLAGS(move.move32);
+    MOVE32_SET_FLAGS(move.move32, existingFlags | MOVE_FLAG_KNIGHT_PROMO);
+    rate_move(board, &move);
+    movelist_add(moves, move);
+    MOVE32_SET_FLAGS(move.move32, existingFlags | MOVE_FLAG_BISHOP_PROMO);
+    rate_move(board, &move);
+    movelist_add(moves, move);
+    MOVE32_SET_FLAGS(move.move32, existingFlags | MOVE_FLAG_ROOK_PROMO);
+    rate_move(board, &move);
+    movelist_add(moves, move);
+    MOVE32_SET_FLAGS(move.move32, existingFlags | MOVE_FLAG_QUEEN_PROMO);
+    rate_move(board, &move);
+    movelist_add(moves, move);
+}
+
+void generate_pawn_moves(board_t *board, movelist_t *moves) {
+    Side side = board->sideToMove;
+    PieceType moved = W_PAWN + side * 6;
+    bb64 pcbb = board->pcbb[moved];
+    PieceType captured = EMPTY;
+    move_t move = {0};
+    int8_t dir = 1 - side * 2;
+    int8_t rank_promo = side * 7;
+
+    while (pcbb) {  // loop over all pawns of side to move
+        Square src = pop_lsb(&pcbb);
+        Square target;
+        uint8_t rank_src = src / 8;
+        uint8_t file_src = src % 8;
+        uint8_t rank_target = rank_src + 1;
+
+        // add attacking moves
+        bb64 attacks = get_pawn_attacks(src, side) & board->occupied[!side];
+        while (attacks) {  // loop over valid attacks on enemy pieces
+            target = pop_lsb(&attacks);
+            captured = board->squares[target];
+            move = create_move(src, target, moved, captured,
+                               board->castlingRights, MOVE_FLAG_CAPTURE);
+
+            // cant be quiet if promo
+            if (rank_target == rank_promo) {
+                add_promo_variations(board, moves, move);
+            } else {
+                rate_move(board, &move);
+                movelist_add(moves, move);
+            }
+        }
+
+        // pawn push, one square
+        target = src + dir * 8;
+        if (SQUARE_VALID(target) && board->squares[target] == EMPTY) {
+            move = create_move(src, target, moved, EMPTY, board->castlingRights,
+                               MOVE_FLAG_QUITE);
+            // cant be quiet if promo
+            if (rank_target == rank_promo) {
+                add_promo_variations(board, moves, move);
+            } else {
+                rate_move(board, &move);
+                movelist_add(moves, move);
+            }
+
+            // pawn push, two squares
+            target = target + dir * 8;
+            if (((rank_src == 1 && side == WHITE) ||   // white double push
+                 (rank_src == 7 && side == BLACK)) &&  // black double push
+                SQUARE_VALID(target) &&
+                board->squares[target] == EMPTY) {
+                MOVE32_SET_FLAGS(move.move32, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+                rate_move(board, &move);
+                movelist_add(moves, move);
+            }
+        }
+    }
+
+    // en passant
+    if (SQUARE_VALID(board->enPassantSquare)) {
+        // valid EP attackers are the same as the squares that the EP square
+        // could attack, from the other sides POV
+        uint64_t ep_attackers =
+            get_pawn_attacks(board->enPassantSquare, !board->sideToMove) &
+            board->pcbb[moved];
+
+        while (ep_attackers) {
+            Square src = pop_lsb(&ep_attackers);
+            move = create_move(src, board->enPassantSquare, moved,
+                               side == WHITE ? B_PAWN : W_PAWN,
+                               board->castlingRights, MOVE_FLAG_EN_PASSANT);
+            rate_move(board, &move);
+            movelist_add(moves, move);
+        }
+    }
+}
+
+void generate_knight_moves(board_t *board, movelist_t *moves) {}
+
+void generate_king_moves(board_t *board, movelist_t *moves) {}
+
+void generate_rook_moves(board_t *board, movelist_t *moves) {}
+
+void generate_bishop_moves(board_t *board, movelist_t *moves) {}
+
+void generate_queen_moves(board_t *board, movelist_t *moves) {}
+
+void generate_castling_moves(board_t *board, movelist_t *moves) {}
+
+void generate_moves(board_t *board, movelist_t *moves) {
+    generate_pawn_moves(board, moves);
+    generate_knight_moves(board, moves);
+    generate_king_moves(board, moves);
+    generate_rook_moves(board, moves);
+    generate_bishop_moves(board, moves);
+    generate_queen_moves(board, moves);
+    generate_castling_moves(board, moves);
+}
+
+void movelist_add(movelist_t *moves, move_t move) {
+    if (moves->moveCount >= MOVELIST_SIZE) return;  // safety
+    moves->move[moves->moveCount++] = move;
+}
+
+void movelist_print(movelist_t *moves) {
+    for (int i = 0; i < moves->moveCount; i++) {
+        print_move(moves->move[i]);
+    }
+}
+
 // TODO unimplemented!
-int rate_move(board_t *board, move_t *move) { return 0; }
+void rate_move(board_t *board, move_t *move) { return; }

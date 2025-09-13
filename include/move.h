@@ -1,17 +1,15 @@
 #ifndef MOVE_H
 #define MOVE_H
 #include <stdint.h>
+#include "types.h"
 
-/* 26 bits to represent a move :
+/* 28 bits to represent a move :
  * Castling rights BEFORE move : 4 bits
- * Captured piece              : 3 bits
- * Moved piece type            : 3 bits
+ * Captured piece type         : 4 bits
+ * Moved piece type            : 4 bits
  * Flags                       : 4 bits
  * Origin                      : 6 bits
  * Destination                 : 6 bits
- *
- * Castling:
- * Same as FEN, QKqk = 1111, Qk = 1001, etc.
  *
  * Piece types: see types.h
  *
@@ -34,8 +32,13 @@
 
 typedef struct {
     int rating; // score of this move for move ordering
-    uint32_t move;
+    uint32_t move32;
 } move_t;
+
+#define CASTLE_WHITE_KING (1 << 0)
+#define CASTLE_WHITE_QUEEN (1 << 1)
+#define CASTLE_BLACK_KING (1 << 2)
+#define CASTLE_BLACK_QUEEN (1 << 3)
 
 #define MOVE_FLAG_QUITE 0b0000
 #define MOVE_FLAG_DOUBLE_PAWN_PUSH 0b0001
@@ -52,13 +55,24 @@ typedef struct {
 #define MOVE_FLAG_ROOK_PROMO_CAPTURE 0b1110
 #define MOVE_FLAG_QUEEN_PROMO_CAPTURE 0b1111
 
-#define MOVE_DST(m) (m & 0x3f)
-#define MOVE_SRC(m) ((m >> 6) & 0x3f)
-#define MOVE_FLAGS(m) ((m >> 12) & 0xf)
-#define MOVE_PIECE_TYPE(m) ((m >> 16) & 0x7)
-#define MOVE_CAPTURED_PIECE(m) ((m >> 19) & 0x7)
-#define MOVE_PROMOTION_PIECE_TYPE(m) ((MOVE_FLAGS() & 0b11) + 2)
-#define MOVE_CASTLING_RIGHTS(m) ((m >> 22) & 0xf)
-#define MOVE_EQ(m1, m2) (m1.move == m2.move)
+// getters
+#define MOVE32_DST(m) (m & 0x3f)
+#define MOVE32_SRC(m) ((m >> 6) & 0x3f)
+#define MOVE32_FLAGS(m) ((m >> 12) & 0xf)
+#define MOVE32_PIECE_TYPE(m) ((m >> 16) & 0xf)
+#define MOVE32_CAPTURED_PIECE(m) ((m >> 20) & 0xf)
+#define MOVE32_CASTLING_RIGHTS(m) ((m >> 24) & 0xf)
+
+// setters
+#define MOVE32_SET_DST(m, dst) ((m) = ((m) & ~0x3f) | ((dst) & 0x3f))
+#define MOVE32_SET_SRC(m, src) ((m) = ((m) & ~(0x3f << 6)) | (((src) & 0x3f) << 6))
+#define MOVE32_SET_FLAGS(m, flags) ((m) = ((m) & ~(0xf << 12)) | (((flags) & 0xf) << 12))
+#define MOVE32_SET_MOVED_PIECE_TYPE(m, piece_type) ((m) = ((m) & ~(0xf << 16)) | (((piece_type) & 0xf) << 16))
+#define MOVE32_SET_CAPTURED_PIECE_TYPE(m, piece_type) ((m) = ((m) & ~(0xf << 20)) | (((piece_type) & 0xf) << 20))
+#define MOVE32_SET_CASTLING_RIGHTS(m, rights) ((m) = ((m) & ~(0xf << 24)) | (((rights) & 0xf) << 24))
+
+move_t create_move(Square from, Square to, PieceType moved, PieceType captured, uint8_t castling, uint8_t flags);
+
+void print_move(move_t move);
 
 #endif

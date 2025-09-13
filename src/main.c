@@ -6,12 +6,16 @@
 #include "util.h"
 
 int main(int argc, char *argv[]) {
-    // board_t board;
-    // init_board(&board);
-    // print_board(&board);
-    // printf("board_t size: %lu\n", sizeof(board_t));
-    // initialize_movegen();
-    // int64_t bb = get_queen_attacks(A1, bitboard_masks[B2] | bitboard_masks[D1]);
-    printbb(0x8080807080808000);
+    board_t board;
+    movelist_t moves;
+    init_board(&board);
+    initialize_movegen();
+
+    // set_fen(&board, "8/8/8/8/8/8/4P3/8 w - - 0 1");
+    print_board(&board);
+    
+    generate_moves(&board, &moves);
+    
+    movelist_print(&moves);
     return 0;
 }

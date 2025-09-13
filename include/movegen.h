@@ -13,8 +13,8 @@
 
 typedef struct {
     move_t move[MOVELIST_SIZE];  // move list
-    int moveCount;               // number of moves stored
-    int index;                   // index in the list
+    int moveCount;                // number of moves stored
+    int index;                    // index in the list
 } movelist_t;
 
 /// @brief Initializes movegen. Must be run once before using movegen
@@ -71,16 +71,23 @@ uint64_t get_rook_attacks(Square square, uint64_t occupied);
 uint64_t get_queen_attacks(Square square, uint64_t occupied);
 
 /// @brief Rates a move for move ordering
-/// @param move 
-/// @return 0 on success
-int rate_move(board_t *board, move_t *move);
+/// @param move to rate
+void rate_move(board_t *board, move_t *move);
 
 /// @brief Returns the best next move in the move list
 /// @param moves list to search
 /// @return next best move on success, NULL on error
 move_t *movelist_get_next(movelist_t *moves);
 
+/// @brief Adds a move to the move list
+/// @param moves movelist to add to
+/// @param move move to add
+void movelist_add(movelist_t *moves, move_t move);
+
 /// @brief Clears the move list
 void movelist_clear(movelist_t *moves);
+
+/// @brief Prints the move list
+void movelist_print(movelist_t *moves);
 
 #endif

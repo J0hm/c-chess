@@ -12,4 +12,8 @@ int popcount(uint64_t bb);
 /// @param bb
 void printbb(bb64 bb);
 
+char* square_to_string(Square sq);
+
+char* piece_type_to_string(PieceType pt);
+
 #endif
