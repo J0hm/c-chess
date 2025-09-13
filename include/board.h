@@ -73,4 +73,9 @@ int board_equal_hash(board_t *b1, board_t *b2);
 /// @return 1 if equal, 0 otherwise
 int board_equal_exact(board_t *b1, board_t *b2);
 
+/// @brief Clones one board to another
+/// @param dest 
+/// @param src 
+/// @return 0 on success, -ERR otherwise
+int board_clone(board_t *dest, board_t *src);
 #endif

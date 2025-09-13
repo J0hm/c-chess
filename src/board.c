@@ -276,6 +276,7 @@ int set_fen(board_t* board, char* fen) {
         board->fullMoves = 1;
     }
 
+    board->hash = hash_board(board);
     free(fen_copy);
     return 0;
 }
@@ -323,4 +324,27 @@ void print_board(board_t* board) {
     if (board->castlingRights & CASTLE_BLACK_QUEEN) printf("q");
     if (board->castlingRights == 0) printf("-");
     printf("\n");
+}
+
+// public board equals functions
+int board_equal_bb(board_t* b1, board_t* b2) {
+    if (b1 == NULL || b2 == NULL) return -1;
+    return memcmp(b1->pcbb, b2->pcbb, sizeof(b1->pcbb)) == 0;
+}
+
+int board_equal_hash(board_t* b1, board_t* b2) {
+    if (b1 == NULL || b2 == NULL) return -1;
+    return b1->hash == b2->hash;
+}
+
+int board_equal_exact(board_t* b1, board_t* b2) {
+    if (b1 == NULL || b2 == NULL) return -1;
+    if(b1 == b2) return 1; // same address, so same board
+    return memcmp(b1, b2, sizeof(board_t)) == 0; // same memory
+}
+
+int board_clone(board_t *dest, board_t *src) {
+    if (dest == NULL || src == NULL) return -1;
+    memcpy(dest, src, sizeof(board_t));
+    return 0;
 }

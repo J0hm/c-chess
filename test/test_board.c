@@ -14,7 +14,6 @@ void test_init(void) {
     init_board(&board);
 
     // test initial values
-    TEST_ASSERT_EQUAL_UINT64(0, board.hash);
     TEST_ASSERT_EQUAL_UINT8(0xF, board.castlingRights);
     TEST_ASSERT_EQUAL_UINT8(0, board.sideToMove);
     TEST_ASSERT_EQUAL_INT(0, board.inCheck);
@@ -315,9 +314,57 @@ void test_set_fen(void) {
     TEST_ASSERT_EQUAL_UINT64(0x1000000000000000ULL, board.pcbb[B_KING]);
 }
 
+void test_bb_equals(void) {
+    board_t board1, board2;
+    board_t* board_ptr;
+    init_board(&board1);
+    init_board(&board2);
+    TEST_ASSERT_TRUE(board_equal_hash(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_exact(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
+
+    set_fen(
+        &board1,
+        "r1bqk2r/pp2nppp/2n1p3/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 2 8");
+    TEST_ASSERT_FALSE(board_equal_hash(&board1, &board2));
+    TEST_ASSERT_FALSE(board_equal_exact(&board1, &board2));
+    TEST_ASSERT_FALSE(board_equal_bb(&board1, &board2));
+
+    set_fen(
+        &board2,
+        "r1bqk2r/pp2nppp/2n1p3/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 2 8");
+    TEST_ASSERT_TRUE(board_equal_hash(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_exact(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
+
+    board_ptr = &board1;
+    TEST_ASSERT_TRUE(board_equal_hash(&board1, board_ptr));
+    TEST_ASSERT_TRUE(board_equal_exact(&board1, board_ptr));
+    TEST_ASSERT_TRUE(board_equal_bb(&board1, board_ptr));
+}
+
+void test_bb_clone(void) {
+    board_t board1, board2;
+    init_board(&board1);
+    board_clone(&board1, &board2);
+    TEST_ASSERT_TRUE(board_equal_hash(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_exact(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
+
+    set_fen(
+        &board1,
+        "r1bqk2r/pp2nppp/2n1p3/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 2 8");
+    board_clone(&board2, &board1);
+    TEST_ASSERT_TRUE(board_equal_hash(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_exact(&board1, &board2));
+    TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_init);
     RUN_TEST(test_set_fen);
+    RUN_TEST(test_bb_equals);
+    RUN_TEST(test_bb_clone);
     return UNITY_END();
 }
