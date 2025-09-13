@@ -30,3 +30,5 @@ int pop_lsb(uint64_t *bb) {
     *bb &= *bb - 1;
     return lsb;
 }
+
+int popcount(uint64_t bb) { return __builtin_popcountll(bb); }

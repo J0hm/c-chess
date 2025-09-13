@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "constants.h"
+#include "hash.h"
 
 // take a string (i.e. K) and return the PieceType
 PieceType char_to_piece(const char c) {
@@ -339,12 +340,60 @@ int board_equal_hash(board_t* b1, board_t* b2) {
 
 int board_equal_exact(board_t* b1, board_t* b2) {
     if (b1 == NULL || b2 == NULL) return -1;
-    if(b1 == b2) return 1; // same address, so same board
-    return memcmp(b1, b2, sizeof(board_t)) == 0; // same memory
+    if (b1 == b2) return 1;                       // same address, so same board
+    return memcmp(b1, b2, sizeof(board_t)) == 0;  // same memory
 }
 
-int board_clone(board_t *dest, board_t *src) {
+int board_clone(board_t* dest, board_t* src) {
     if (dest == NULL || src == NULL) return -1;
     memcpy(dest, src, sizeof(board_t));
+    return 0;
+}
+
+// public make and unmake move functions
+int make_move(board_t* board, move_t move) {
+    if (board == NULL) return -1;
+
+    if(board->historyIndex >= MAX_GAME_LENGTH) return -1;
+
+    // save current game state for undo
+    game_state_t* state = &board->history[board->historyIndex++];
+    state->hash = board->hash;
+    state->castlingRights = board->castlingRights;
+    state->enPassantSquare = board->enPassantSquare;
+    state->halfMoves = board->halfMoves;
+    state->lastTriggerPly = board->lastTriggerPly;
+    state->repetitions = board->repetitions;
+    state->lastMove = board->lastMove;
+    state->wasInCheck = board->inCheck;
+
+    // TODO: execute the move
+
+    // TODO: repetition detection
+    // TODO: last trigger
+    // TODO: check detection
+    board->sideToMove = !board->sideToMove;
+    board->fullMoves += (board->sideToMove == WHITE);
+    board->hash = hash_board(board);
+
+    return 0;
+}
+
+int unmake_move(board_t* board) {
+    if (board == NULL) return -1;
+    game_state_t *state = &board->history[--board->historyIndex];
+
+    board->hash = state->hash;
+    board->castlingRights = state->castlingRights;
+    board->enPassantSquare = state->enPassantSquare;
+    board->halfMoves = state->halfMoves;
+    board->lastTriggerPly = state->lastTriggerPly;
+    board->repetitions = state->repetitions;
+    board->lastMove = state->lastMove;
+    board->inCheck = state->wasInCheck;
+
+    // TODO: undo the move
+
+    board->sideToMove = !board->sideToMove;
     return 0;
 }

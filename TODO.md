@@ -7,10 +7,11 @@
 - Integrate setting hash w/ parsefen
 - ~~Test hashing vs. polyglot~~
     - Note: this also tests parse FEN, since the BB needs to be parsed properly for tests to pass
-- Implement and test board equality
+- ~~Implement and test board equality~~
+- movegen -> do BEFORE finishing make/unmake
 - Decide on board history and make/unmake move
+    - Make board_equal_exact ignore board history
 - makeMove function
 - move legality checking
 - Board state history
 - unmakeMove
-- movegen

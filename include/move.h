@@ -33,9 +33,9 @@
  */
 
 typedef struct {
-    int rating;
+    int rating; // score of this move for move ordering
     uint32_t move;
-} Move;
+} move_t;
 
 #define MOVE_FLAG_QUITE 0b0000
 #define MOVE_FLAG_DOUBLE_PAWN_PUSH 0b0001
