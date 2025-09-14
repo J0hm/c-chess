@@ -21,7 +21,6 @@ void test_init(void) {
     TEST_ASSERT_EQUAL_INT(0, board.repetitions);
     TEST_ASSERT_EQUAL_INT(0, board.halfMoves);
     TEST_ASSERT_EQUAL_INT(1, board.fullMoves);
-    TEST_ASSERT_NULL(board.lastMove);
     TEST_ASSERT_EQUAL_UINT64(ER, board.enPassantSquare);
 
     // test bitboard equality for starting position
@@ -360,11 +359,41 @@ void test_bb_clone(void) {
     TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
 }
 
+void test_make_unmake(void) {
+    board_t board_base, board_test;
+    move_t move;
+    init_board(&board_base);
+    init_board(&board_test);
+    TEST_ASSERT_TRUE(board_equal_hash(&board_base, &board_test));
+    TEST_ASSERT_TRUE(board_equal_bb(&board_base, &board_test));
+
+    move = create_move(E2, E3, W_PAWN, EMPTY, 0, 0);
+    make_move(&board_test, move);
+    unmake_move(&board_test);
+    TEST_ASSERT_TRUE(board_equal_hash(&board_test, &board_base));
+    TEST_ASSERT_TRUE(board_equal_bb(&board_test, &board_base));
+
+    make_move(&board_test, move);
+    unmake_move(&board_test);
+    TEST_ASSERT_TRUE(board_equal_hash(&board_test, &board_base));
+    TEST_ASSERT_TRUE(board_equal_bb(&board_test, &board_base));
+
+    make_move(&board_test, move);
+    move = create_move(E7, E5, B_PAWN, EMPTY, 0, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board_test, move);
+    move = create_move(E3, E4, W_PAWN, EMPTY, 0, 0);
+    unmake_move(&board_test);
+    unmake_move(&board_test);
+    TEST_ASSERT_TRUE(board_equal_hash(&board_test, &board_base));
+    TEST_ASSERT_TRUE(board_equal_bb(&board_test, &board_base));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_init);
     RUN_TEST(test_set_fen);
     RUN_TEST(test_bb_equals);
     RUN_TEST(test_bb_clone);
+    RUN_TEST(test_make_unmake);
     return UNITY_END();
 }

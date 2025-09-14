@@ -428,8 +428,8 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
     bb64 pcbb = board->pcbb[moved];
     PieceType captured = EMPTY;
     move_t move = {0};
-    int8_t dir = 1 - side * 2;
-    int8_t rank_promo = side * 7;
+    int8_t dir = side == WHITE ? 1 : -1;
+    int8_t rank_promo = side == WHITE ? 7 : 0;
 
     while (pcbb) {  // loop over all pawns of side to move
         Square src = pop_lsb(&pcbb);
@@ -470,7 +470,7 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
             // pawn push, two squares
             target = target + dir * 8;
             if (((rank_src == 1 && side == WHITE) ||   // white double push
-                 (rank_src == 7 && side == BLACK)) &&  // black double push
+                 (rank_src == 6 && side == BLACK)) &&  // black double push
                 SQUARE_VALID(target) &&
                 board->squares[target] == EMPTY) {
                 MOVE32_SET_DST(move.move32, target);
@@ -627,7 +627,20 @@ void generate_queen_moves(board_t *board, movelist_t *moves) {
 }
 
 int is_square_attacked_by(board_t *board, Square square, Side side) {
-    return bitboard_masks[square] & get_attack_bitboard(board, side);
+    return (bitboard_masks[square] & get_attack_bitboard(board, side)) != 0;
+}
+
+int is_in_check(board_t *board, Side side) {
+    PieceType moved = W_KING + side * 6;
+    bb64 pcbb = board->pcbb[moved];
+
+    // loop over all kings, to support gamemodes with multiple
+    while (pcbb) {
+        Square src = pop_lsb(&pcbb);
+        if (is_square_attacked_by(board, src, !side)) return 1;
+    }
+
+    return 0;
 }
 
 static int can_castle_kingside(board_t *board, Side side) {
@@ -652,8 +665,8 @@ static int can_castle_kingside(board_t *board, Side side) {
         return 0;
 
     // ensure f and g are not attacked
-    if (is_square_attacked_by(board, f_square, (~side)&1) ||
-        is_square_attacked_by(board, g_square, (~side)&1))
+    if (is_square_attacked_by(board, f_square, (~side) & 1) ||
+        is_square_attacked_by(board, g_square, (~side) & 1))
         return 0;
 
     return 1;
@@ -697,11 +710,8 @@ void generate_castling_moves(board_t *board, movelist_t *moves) {
 
     if (board->inCheck) return;
 
-    printf("generating castling moves\n");
-
     // check kingside castling
     if (can_castle_kingside(board, side)) {
-        printf("can castle kingside\n");
         Square king_from = (side == WHITE) ? E1 : E8;
         Square king_to = (side == WHITE) ? G1 : G8;
 
@@ -713,7 +723,6 @@ void generate_castling_moves(board_t *board, movelist_t *moves) {
 
     // check queenside castling
     if (can_castle_queenside(board, side)) {
-        printf("can castle queenside\n");
         Square king_from = (side == WHITE) ? E1 : E8;
         Square king_to = (side == WHITE) ? C1 : C8;
 
@@ -740,10 +749,57 @@ void movelist_add(movelist_t *moves, move_t move) {
     moves->move[moves->moveCount++] = move;
 }
 
+void movelist_clear(movelist_t *moves) {
+    moves->moveCount = 0;
+    moves->index = 0;
+}
+
 void movelist_print(movelist_t *moves) {
     for (int i = 0; i < moves->moveCount; i++) {
         print_move(moves->move[i]);
     }
+}
+
+static uint64_t perft_twig(board_t *board, int depth) {
+    movelist_t moves = {0};
+    uint64_t nodes = 0;
+    int ret = 0;
+
+    if (depth == 0) return 1ULL;
+
+    generate_moves(board, &moves);
+
+    for (int i = 0; i < moves.moveCount; i++) {
+        ret = make_move(board, moves.move[i]);
+        if (!ret) {  // move is legal
+            nodes += perft_twig(board, depth - 1);
+        }
+        unmake_move(board);
+    }
+    return nodes;
+}
+
+uint64_t perft(board_t *board, int depth) {
+    movelist_t moves = {0};
+    uint64_t nodes = 0;
+    uint64_t twig_nodes = 0;
+    int ret = 0;
+
+    if (depth == 0) return 1ULL;
+
+    generate_moves(board, &moves);
+
+    for (int i = 0; i < moves.moveCount; i++) {
+        ret = make_move(board, moves.move[i]);
+        if (!ret) {  // move is legal
+            twig_nodes = perft_twig(board, depth - 1);
+            nodes += twig_nodes;
+            print_move(moves.move[i]);
+            printf("\t%lu nodes\n", twig_nodes);
+        }
+        unmake_move(board);
+    }
+    return nodes;
 }
 
 // TODO unimplemented!

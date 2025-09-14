@@ -76,6 +76,12 @@ uint64_t get_queen_attacks(Square square, uint64_t occupied);
 /// @param side check if the square on this side is attacked
 int is_square_attacked_by(board_t *board, Square square, Side side);
 
+/// @brief Checks if side is in check
+/// @param board 
+/// @param side 
+/// @return 0 if not in check, 1 otherwise
+int is_in_check(board_t *board, Side side);
+
 /// @brief Rates a move for move ordering
 /// @param move to rate
 void rate_move(board_t *board, move_t *move);
@@ -95,5 +101,10 @@ void movelist_clear(movelist_t *moves);
 
 /// @brief Prints the move list
 void movelist_print(movelist_t *moves);
+
+/// @brief Performs a perft test
+/// @param board board to perft on
+/// @param depth depth to perft
+uint64_t perft(board_t *board, int depth);
 
 #endif

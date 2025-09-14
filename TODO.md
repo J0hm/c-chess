@@ -11,10 +11,13 @@
 - ~~magic bitboards~~
     - ~~Test~~
 - Ensure static, restrict, inline, & const qualifiers are used correctly
-- movegen -> do BEFORE finishing make/unmake
-- Decide on board history and make/unmake move
+- ~~movegen -> do BEFORE finishing make/unmake~~
+    - test
+- ~~Decide on board history and make/unmake move~~
     - Make board_equal_exact ignore board history
-- makeMove function
-- move legality checking
-- Board state history
-- unmakeMove
+- ~~makeMove function~~
+- ~~move legality checking~~
+- ~~check detection~~
+- ~~Board state history~~
+- ~~unmakeMove~~
+- perft testing - isolate spots where movegen is off

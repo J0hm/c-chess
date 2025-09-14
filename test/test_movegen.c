@@ -246,6 +246,19 @@ void test_get_rook_attacks(void) {
     TEST_ASSERT_EQUAL_HEX64(0xF708080808080808, attacks);
 }
 
+void test_get_attacks(void) {
+    board_t board;
+    movelist_t moves;
+    init_board(&board);
+    movelist_clear(&moves);
+
+    // black king is in check
+    set_fen(&board, "r4rk1/1pp1qBpp/p1np1n2/2b1p1B1/4P1b1/P1NP1N2/1PP1QPPP/R4RK1 b - - 0 10");
+
+    generate_moves(&board, &moves);
+
+    TEST_ASSERT_EQUAL_INT(4, moves.moveCount);
+}
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_get_king_attacks);
@@ -253,5 +266,6 @@ int main(void) {
     RUN_TEST(test_get_knight_attacks);
     RUN_TEST(test_get_bishop_attacks);
     RUN_TEST(test_get_rook_attacks);
+    RUN_TEST(test_get_attacks);
     return UNITY_END();
 }

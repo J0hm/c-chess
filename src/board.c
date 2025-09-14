@@ -7,6 +7,7 @@
 
 #include "constants.h"
 #include "hash.h"
+#include "movegen.h"
 
 // take a string (i.e. K) and return the PieceType
 PieceType char_to_piece(const char c) {
@@ -93,6 +94,16 @@ void set_piece(board_t* board, Square sq, PieceType piece) {
         board->occupied[PIECE_SIDE(piece)] |=
             bitboard_masks[sq];  // set bitboard for color
     }
+}
+
+// clear a piece on the board, including updating utility bitboards
+void clear_piece(board_t* board, Square sq) {
+    if (!SQUARE_VALID(sq)) return;
+
+    PieceType piece = board->squares[sq];
+    board->squares[sq] = EMPTY;
+    board->pcbb[piece] &= ~bitboard_masks[sq];
+    board->occupied[PIECE_SIDE(piece)] &= ~bitboard_masks[sq];
 }
 
 // parses placement, i.e. rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
@@ -352,9 +363,11 @@ int board_clone(board_t* dest, board_t* src) {
 
 // public make and unmake move functions
 int make_move(board_t* board, move_t move) {
-    if (board == NULL) return -1;
+    if (board == NULL || board->historyIndex == MAX_GAME_LENGTH) return 0;
 
-    if(board->historyIndex >= MAX_GAME_LENGTH) return -1;
+    PieceType moved = MOVE32_PIECE_TYPE(move.move32);
+    uint8_t flags = MOVE32_FLAGS(move.move32);
+    int8_t dir = board->sideToMove ? -1 : 1;
 
     // save current game state for undo
     game_state_t* state = &board->history[board->historyIndex++];
@@ -367,21 +380,50 @@ int make_move(board_t* board, move_t move) {
     state->lastMove = board->lastMove;
     state->wasInCheck = board->inCheck;
 
-    // TODO: execute the move
+    if (flags == MOVE_FLAG_KING_CASTLE) {
+        // TODO
+    } else if (flags == MOVE_FLAG_QUEEN_CASTLE) {
+        // TODO
+    } else if (flags & 0b1000) {  // PROMOTION
+        // TODO set moved to type
+    } else {  // default case
+        clear_piece(board, MOVE32_SRC(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32));
+        set_piece(board, MOVE32_DST(move.move32), moved);
+        board->enPassantSquare = ER;
+    }
+
+    board->lastMove = move;
+
+    // increment halfmove clock
+    if (moved != W_PAWN && moved != B_PAWN &&
+        MOVE32_FLAGS(move.move32) == MOVE_FLAG_QUITE)
+        board->halfMoves++;
+
+    if (MOVE32_FLAGS(move.move32) == MOVE_FLAG_DOUBLE_PAWN_PUSH)
+        board->enPassantSquare = MOVE32_DST(move.move32) - 8 * dir;
 
     // TODO: repetition detection
     // TODO: last trigger
-    // TODO: check detection
+
     board->sideToMove = !board->sideToMove;
     board->fullMoves += (board->sideToMove == WHITE);
     board->hash = hash_board(board);
+
+    // if the side to make the move is in check, it is not legal
+    if (is_in_check(board, !board->sideToMove)) return -1;
+
+    board->inCheck = is_in_check(board, board->sideToMove);
 
     return 0;
 }
 
 int unmake_move(board_t* board) {
-    if (board == NULL) return -1;
-    game_state_t *state = &board->history[--board->historyIndex];
+    if (board == NULL) return 0;
+    game_state_t* state = &board->history[--board->historyIndex];
+    move_t to_undo = board->lastMove;
+    PieceType moved = MOVE32_PIECE_TYPE(to_undo.move32);
+    uint8_t flags = MOVE32_FLAGS(to_undo.move32);
 
     board->hash = state->hash;
     board->castlingRights = state->castlingRights;
@@ -392,7 +434,19 @@ int unmake_move(board_t* board) {
     board->lastMove = state->lastMove;
     board->inCheck = state->wasInCheck;
 
-    // TODO: undo the move
+    if (flags == MOVE_FLAG_KING_CASTLE) {
+        // TODO
+    } else if (flags == MOVE_FLAG_QUEEN_CASTLE) {
+        // TODO
+    } else if (flags & 0b1000) {  // PROMOTION
+        // TODO set moved to type
+    } else {  // default case
+        clear_piece(board, MOVE32_SRC(to_undo.move32));
+        clear_piece(board, MOVE32_DST(to_undo.move32));
+        set_piece(board, MOVE32_SRC(to_undo.move32), moved);
+        set_piece(board, MOVE32_DST(to_undo.move32),
+                  MOVE32_CAPTURED_PIECE(to_undo.move32));
+    }
 
     board->sideToMove = !board->sideToMove;
     return 0;

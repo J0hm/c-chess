@@ -17,7 +17,7 @@ typedef struct {
     int halfMoves;
     int lastTriggerPly;
     int repetitions;
-    move_t *lastMove;
+    move_t lastMove;
     int wasInCheck;  // check status before the move
 } game_state_t;
 
@@ -33,7 +33,7 @@ typedef struct {
                          // advance
     int fullMoves;       // starts at 1 and is incremented after Black's move
 
-    move_t *lastMove;
+    move_t lastMove;
     Square enPassantSquare;  // en passant target square
 
     // 64-bit bitboards
@@ -62,6 +62,11 @@ int clear_board(board_t *board);
 /// @param sq
 /// @param piece
 void set_piece(board_t *board, Square sq, PieceType piece);
+
+/// @brief Clears a piece from the board
+/// @param board
+/// @param sq
+void clear_piece(board_t *board, Square sq);
 
 /// @brief Sets the board state from a FEN string
 /// @param board
