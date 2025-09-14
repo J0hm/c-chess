@@ -20,4 +20,4 @@
 - ~~check detection~~
 - ~~Board state history~~
 - ~~unmakeMove~~
-- perft testing - isolate spots where movegen is off
+- ~~perft testing - isolate spots where movegen is off~~
