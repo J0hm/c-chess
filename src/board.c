@@ -380,17 +380,50 @@ int make_move(board_t* board, move_t move) {
     state->lastMove = board->lastMove;
     state->wasInCheck = board->inCheck;
 
+    board->enPassantSquare = ER;
+
     if (flags == MOVE_FLAG_KING_CASTLE) {
-        // TODO
+        Square rook_dst = board->sideToMove == WHITE ? F1 : F8;
+        Square rook_src = board->sideToMove == WHITE ? H1 : H8;
+        clear_piece(board, rook_src);
+        clear_piece(board, MOVE32_SRC(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32));
+        set_piece(board, MOVE32_DST(move.move32), moved);
+        set_piece(board, rook_dst, moved - 2);
     } else if (flags == MOVE_FLAG_QUEEN_CASTLE) {
-        // TODO
+        Square rook_dst = board->sideToMove == WHITE ? D1 : D8;
+        Square rook_src = board->sideToMove == WHITE ? A1 : A8;
+        clear_piece(board, rook_src);
+        clear_piece(board, MOVE32_SRC(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32));
+        set_piece(board, MOVE32_DST(move.move32), moved);
+        set_piece(board, rook_dst, moved - 2);
     } else if (flags & 0b1000) {  // PROMOTION
-        // TODO set moved to type
+        clear_piece(board, MOVE32_SRC(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32));
+        if (flags == MOVE_FLAG_KNIGHT_PROMO ||
+            flags == MOVE_FLAG_KNIGHT_PROMO_CAPTURE) {
+            moved = moved + 1;
+        } else if (flags == MOVE_FLAG_BISHOP_PROMO ||
+                   flags == MOVE_FLAG_BISHOP_PROMO_CAPTURE) {
+            moved = moved + 2;
+        } else if (flags == MOVE_FLAG_ROOK_PROMO ||
+                   flags == MOVE_FLAG_ROOK_PROMO_CAPTURE) {
+            moved = moved + 3;
+        } else if (flags == MOVE_FLAG_QUEEN_PROMO ||
+                   flags == MOVE_FLAG_QUEEN_PROMO_CAPTURE) {
+            moved = moved + 4;
+        }
+        set_piece(board, MOVE32_DST(move.move32), moved);
+    } else if (flags == MOVE_FLAG_EN_PASSANT) {
+        clear_piece(board, MOVE32_SRC(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32));
+        clear_piece(board, MOVE32_DST(move.move32) - 8 * dir);
+        set_piece(board, MOVE32_DST(move.move32), moved);
     } else {  // default case
         clear_piece(board, MOVE32_SRC(move.move32));
         clear_piece(board, MOVE32_DST(move.move32));
         set_piece(board, MOVE32_DST(move.move32), moved);
-        board->enPassantSquare = ER;
     }
 
     board->lastMove = move;
@@ -424,6 +457,7 @@ int unmake_move(board_t* board) {
     move_t to_undo = board->lastMove;
     PieceType moved = MOVE32_PIECE_TYPE(to_undo.move32);
     uint8_t flags = MOVE32_FLAGS(to_undo.move32);
+    int8_t dir = board->sideToMove ? -1 : 1;
 
     board->hash = state->hash;
     board->castlingRights = state->castlingRights;
@@ -435,11 +469,27 @@ int unmake_move(board_t* board) {
     board->inCheck = state->wasInCheck;
 
     if (flags == MOVE_FLAG_KING_CASTLE) {
-        // TODO
+        Square rook_src = !board->sideToMove == WHITE ? F1 : F8;
+        Square rook_dst = !board->sideToMove == WHITE ? H1 : H8;
+        clear_piece(board, MOVE32_SRC(to_undo.move32));
+        clear_piece(board, MOVE32_DST(to_undo.move32));
+        clear_piece(board, rook_src);
+        set_piece(board, MOVE32_SRC(to_undo.move32), moved);
+        set_piece(board, rook_dst, moved - 2);
     } else if (flags == MOVE_FLAG_QUEEN_CASTLE) {
-        // TODO
-    } else if (flags & 0b1000) {  // PROMOTION
-        // TODO set moved to type
+        Square rook_src = !board->sideToMove == WHITE ? D1 : D8;
+        Square rook_dst = !board->sideToMove == WHITE ? A1 : A8;
+        clear_piece(board, MOVE32_SRC(to_undo.move32));
+        clear_piece(board, MOVE32_DST(to_undo.move32));
+        clear_piece(board, rook_src);
+        set_piece(board, MOVE32_SRC(to_undo.move32), moved);
+        set_piece(board, rook_dst, moved - 2);
+    } else if (flags == MOVE_FLAG_EN_PASSANT) {
+        clear_piece(board, MOVE32_SRC(to_undo.move32));
+        clear_piece(board, MOVE32_DST(to_undo.move32));
+        set_piece(board, MOVE32_SRC(to_undo.move32), moved);
+        set_piece(board, MOVE32_DST(to_undo.move32) + 8 * dir,
+                  MOVE32_CAPTURED_PIECE(to_undo.move32));
     } else {  // default case
         clear_piece(board, MOVE32_SRC(to_undo.move32));
         clear_piece(board, MOVE32_DST(to_undo.move32));

@@ -246,18 +246,213 @@ void test_get_rook_attacks(void) {
     TEST_ASSERT_EQUAL_HEX64(0xF708080808080808, attacks);
 }
 
-void test_get_attacks(void) {
+void test_get_castling_attacks(void) {
     board_t board;
     movelist_t moves;
     init_board(&board);
-    movelist_clear(&moves);
 
     // black king is in check
-    set_fen(&board, "r4rk1/1pp1qBpp/p1np1n2/2b1p1B1/4P1b1/P1NP1N2/1PP1QPPP/R4RK1 b - - 0 10");
+    set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_castling_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(2, moves.moveCount);
 
-    generate_moves(&board, &moves);
+    set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_king_moves(&board, &moves);
+    generate_castling_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(7, moves.moveCount);
 
-    TEST_ASSERT_EQUAL_INT(4, moves.moveCount);
+    set_fen(&board, "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_king_moves(&board, &moves);
+    generate_castling_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(7, moves.moveCount);
+
+    set_fen(&board, "8/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_king_moves(&board, &moves);
+    generate_castling_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(7, moves.moveCount);
+
+    set_fen(&board, "r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_king_moves(&board, &moves);
+    generate_castling_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(7, moves.moveCount);
+}
+
+void test_gen_en_passant(void) {
+    board_t board, board_copy;
+    movelist_t moves;
+    uint64_t hash;
+    move_t move;
+    init_board(&board);
+    movelist_clear(&moves);
+
+    // white can attack en passant
+    set_fen(&board,
+            "rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3");
+    set_fen(&board_copy,
+            "rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3");
+
+    generate_pawn_moves(&board, &moves);
+
+    move = create_move(E5, F6, W_PAWN, B_PAWN, 0xf, 0x5);
+    make_move(&board, move);
+    unmake_move(&board);
+
+    TEST_ASSERT_EQUAL_UINT64(board_copy.hash, board.hash);
+    TEST_ASSERT_TRUE(board_equal_bb(&board, &board_copy));
+}
+
+void test_generate_promotions(void) {
+    board_t board;
+    movelist_t moves;
+    init_board(&board);
+
+    set_fen(&board, "8/8/8/8/8/8/3p4/2R1R3 b - - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(12, moves.moveCount);
+}
+
+void test_generate_pawn_moves(void) {
+    board_t board;
+    movelist_t moves;
+    init_board(&board);
+
+    // initial position
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    set_fen(&board,
+            "rnbqkbnr/pppp2pp/4p3/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(15, moves.moveCount);
+
+    set_fen(&board, "2q1r3/3P4/8/8/8/8/8/8 w - - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(12, moves.moveCount);
+
+    set_fen(&board, "4r3/3P4/8/8/8/8/8/8 w - - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(8, moves.moveCount);
+
+    set_fen(&board, "8/8/8/8/8/8/3p4/2R1R3 b - - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(12, moves.moveCount);
+
+    set_fen(&board, "8/8/8/8/8/8/3p4/4R3 b - - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(8, moves.moveCount);
+
+    set_fen(&board,
+            "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    set_fen(&board,
+            "rnbqkbnr/pppppp1p/8/6p1/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    set_fen(&board,
+            "rnbqk1nr/pppp1ppp/8/4p3/1b5P/1P6/P1PPPPP1/RNBQKBNR w KQkq - 0 1");
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(13, moves.moveCount);
+}
+
+void test_gen_en_passant_edgecase(void) {
+    board_t board;
+    movelist_t moves;
+    move_t move;
+    init_board(&board);
+
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    move = create_move(H2, H4, W_PAWN, EMPTY, 0xf, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    move = create_move(A7, A5, B_PAWN, EMPTY, 0xf, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(15, moves.moveCount);
+
+    move = create_move(A7, A5, B_PAWN, EMPTY, 0xf, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(15, moves.moveCount);
+
+    init_board(&board);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    move = create_move(E2, E3, W_PAWN, EMPTY, 0xf, 0);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(16, moves.moveCount);
+
+    move = create_move(A7, A5, B_PAWN, EMPTY, 0xf, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(15, moves.moveCount);
+
+    move = create_move(H2, H4, W_PAWN, EMPTY, 0xf, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board, move);
+    movelist_clear(&moves);
+    generate_pawn_moves(&board, &moves);
+    TEST_ASSERT_EQUAL_INT(15, moves.moveCount);
+}
+
+void test_perft(void) {
+    board_t board;
+    init_board(&board);
+    uint64_t nodes = 0;
+
+    // test the starting positoon
+    nodes = perft(&board, 1);
+    TEST_ASSERT_EQUAL_UINT64(20, nodes);
+    nodes = perft(&board, 2);
+    TEST_ASSERT_EQUAL_UINT64(400, nodes);
+    nodes = perft(&board, 3);
+    TEST_ASSERT_EQUAL_UINT64(8902, nodes);
+    nodes = perft(&board, 4);
+    TEST_ASSERT_EQUAL_UINT64(197281, nodes);
+    nodes = perft(&board, 5);
+    TEST_ASSERT_EQUAL_UINT64(4865609, nodes);
+
+    // kiwipete
+    set_fen(
+        &board,
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    nodes = perft(&board, 1);
+    TEST_ASSERT_EQUAL_UINT64(48, nodes);
+    nodes = perft(&board, 2);
+    TEST_ASSERT_EQUAL_UINT64(2039, nodes);
+    nodes = perft(&board, 3);
+    TEST_ASSERT_EQUAL_UINT64(97862, nodes);
+    nodes = perft(&board, 4);
+    TEST_ASSERT_EQUAL_UINT64(4085603, nodes);
 }
 int main(void) {
     UNITY_BEGIN();
@@ -266,6 +461,12 @@ int main(void) {
     RUN_TEST(test_get_knight_attacks);
     RUN_TEST(test_get_bishop_attacks);
     RUN_TEST(test_get_rook_attacks);
-    RUN_TEST(test_get_attacks);
+    RUN_TEST(test_get_castling_attacks);
+    RUN_TEST(test_gen_en_passant);
+    RUN_TEST(test_gen_en_passant_edgecase);
+    RUN_TEST(test_generate_pawn_moves);
+    RUN_TEST(test_generate_promotions);
+
+    RUN_TEST(test_perft);
     return UNITY_END();
 }

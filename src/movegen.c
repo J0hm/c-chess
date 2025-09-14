@@ -435,7 +435,7 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
         Square src = pop_lsb(&pcbb);
         Square target;
         uint8_t rank_src = src / 8;
-        uint8_t rank_target = rank_src + 1;
+        uint8_t rank_target = rank_src + dir;
 
         // add attacking moves
         bb64 attacks = get_pawn_attacks(src, side) & board->occupied[!side];
@@ -479,23 +479,20 @@ void generate_pawn_moves(board_t *board, movelist_t *moves) {
                 movelist_add(moves, move);
             }
         }
-    }
 
-    // en passant
-    if (SQUARE_VALID(board->enPassantSquare)) {
-        // valid EP attackers are the same as the squares that the EP square
-        // could attack, from the other sides POV
-        uint64_t ep_attackers =
-            get_pawn_attacks(board->enPassantSquare, !board->sideToMove) &
-            board->pcbb[moved];
-
-        while (ep_attackers) {
-            Square src = pop_lsb(&ep_attackers);
-            move = create_move(src, board->enPassantSquare, moved,
-                               side == WHITE ? B_PAWN : W_PAWN,
-                               board->castlingRights, MOVE_FLAG_EN_PASSANT);
-            rate_move(board, &move);
-            movelist_add(moves, move);
+        // en passant
+        if (SQUARE_VALID(board->enPassantSquare)) {
+            // valid EP attackers are the same as the squares that the EP square
+            // could attack, from the other sides POV
+            uint64_t ep_attacked = get_pawn_attacks(src, board->sideToMove) &
+                                   bitboard_masks[board->enPassantSquare];
+            if (ep_attacked) {
+                move = create_move(src, board->enPassantSquare, moved,
+                                   side == WHITE ? B_PAWN : W_PAWN,
+                                   board->castlingRights, MOVE_FLAG_EN_PASSANT);
+                rate_move(board, &move);
+                movelist_add(moves, move);
+            }
         }
     }
 }
@@ -794,8 +791,8 @@ uint64_t perft(board_t *board, int depth) {
         if (!ret) {  // move is legal
             twig_nodes = perft_twig(board, depth - 1);
             nodes += twig_nodes;
-            print_move(moves.move[i]);
-            printf("\t%lu nodes\n", twig_nodes);
+            // print_move(moves.move[i]);
+            // printf("\t%lu nodes\n", twig_nodes);
         }
         unmake_move(board);
     }
