@@ -27,3 +27,7 @@ void print_move(move_t move) {
         MOVE32_CASTLING_RIGHTS(move.move32), MOVE32_FLAGS(move.move32),
         move.rating);
 }
+
+void to_lan(move_t move, char *buffer) {
+    
+}

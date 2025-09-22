@@ -801,3 +801,7 @@ uint64_t perft(board_t *board, int depth) {
 
 // TODO unimplemented!
 void rate_move(board_t *board, move_t *move) { return; }
+
+move_t parse_lan(board_t *board, char *move) { 
+    return (move_t){0}; 
+}

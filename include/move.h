@@ -1,6 +1,7 @@
 #ifndef MOVE_H
 #define MOVE_H
 #include <stdint.h>
+
 #include "types.h"
 
 /* 28 bits to represent a move :
@@ -31,7 +32,7 @@
  */
 
 typedef struct {
-    int rating; // score of this move for move ordering
+    int rating;  // score of this move for move ordering
     uint32_t move32;
 } move_t;
 
@@ -65,14 +66,22 @@ typedef struct {
 
 // setters
 #define MOVE32_SET_DST(m, dst) ((m) = ((m) & ~0x3f) | ((dst) & 0x3f))
-#define MOVE32_SET_SRC(m, src) ((m) = ((m) & ~(0x3f << 6)) | (((src) & 0x3f) << 6))
-#define MOVE32_SET_FLAGS(m, flags) ((m) = ((m) & ~(0xf << 12)) | (((flags) & 0xf) << 12))
-#define MOVE32_SET_MOVED_PIECE_TYPE(m, piece_type) ((m) = ((m) & ~(0xf << 16)) | (((piece_type) & 0xf) << 16))
-#define MOVE32_SET_CAPTURED_PIECE_TYPE(m, piece_type) ((m) = ((m) & ~(0xf << 20)) | (((piece_type) & 0xf) << 20))
-#define MOVE32_SET_CASTLING_RIGHTS(m, rights) ((m) = ((m) & ~(0xf << 24)) | (((rights) & 0xf) << 24))
+#define MOVE32_SET_SRC(m, src) \
+    ((m) = ((m) & ~(0x3f << 6)) | (((src) & 0x3f) << 6))
+#define MOVE32_SET_FLAGS(m, flags) \
+    ((m) = ((m) & ~(0xf << 12)) | (((flags) & 0xf) << 12))
+#define MOVE32_SET_MOVED_PIECE_TYPE(m, piece_type) \
+    ((m) = ((m) & ~(0xf << 16)) | (((piece_type) & 0xf) << 16))
+#define MOVE32_SET_CAPTURED_PIECE_TYPE(m, piece_type) \
+    ((m) = ((m) & ~(0xf << 20)) | (((piece_type) & 0xf) << 20))
+#define MOVE32_SET_CASTLING_RIGHTS(m, rights) \
+    ((m) = ((m) & ~(0xf << 24)) | (((rights) & 0xf) << 24))
 
-move_t create_move(Square from, Square to, PieceType moved, PieceType captured, uint8_t castling, uint8_t flags);
+move_t create_move(Square from, Square to, PieceType moved, PieceType captured,
+                   uint8_t castling, uint8_t flags);
 
 void print_move(move_t move);
+
+void to_lan(move_t move, char *buf);
 
 #endif
