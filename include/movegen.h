@@ -107,9 +107,4 @@ void movelist_print(movelist_t *moves);
 /// @param depth depth to perft
 uint64_t perft(board_t *board, int depth);
 
-/// @brief Parses a long-algebraic notation move string and returns the move
-/// @param board pointer to board to parse from
-/// @param move string to parse
-move_t parse_lan(board_t *board, char *move);
-
 #endif

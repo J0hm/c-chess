@@ -285,7 +285,6 @@ void test_get_castling_attacks(void) {
 void test_gen_en_passant(void) {
     board_t board, board_copy;
     movelist_t moves;
-    uint64_t hash;
     move_t move;
     init_board(&board);
     movelist_clear(&moves);

@@ -30,4 +30,9 @@ typedef enum {
 
 #define PIECE_SIDE(p) (p > W_KING)
 
+#define PIECE_INDEX(p) (p - W_PAWN)
+
+#define FLIP_SQUARE(sq) ((sq)^56)
+#define OTHER_SIDE(side) ((side)^ 1)
+
 #endif

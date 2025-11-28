@@ -1,5 +1,6 @@
 ## Big todos
 -  ~~Zobrist hashing of boards~~
+- Basic evaluation
 
 ## Next steps
 - ~~Finish parse FEN tests~~
