@@ -1,10 +1,10 @@
 ## Big todos
--  Zobrist hashing of boards
+-  ~~Zobrist hashing of boards~~
 
 ## Next steps
 - ~~Finish parse FEN tests~~
 - ~~Hashing~~
-- Integrate setting hash w/ parsefen
+- ~~Integrate setting hash w/ parsefen~~
 - ~~Test hashing vs. polyglot~~
     - Note: this also tests parse FEN, since the BB needs to be parsed properly for tests to pass
 - ~~Implement and test board equality~~
@@ -21,3 +21,4 @@
 - ~~Board state history~~
 - ~~unmakeMove~~
 - ~~perft testing - isolate spots where movegen is off~~
+- move.c: better testing for to_lan

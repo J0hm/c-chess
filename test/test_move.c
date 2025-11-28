@@ -28,8 +28,19 @@ void test_create_move(void) {
     TEST_ASSERT_EQUAL_UINT32(A5, MOVE32_DST(m32));
 }
 
+// TODO better tests for to_lan
+void test_to_lan(void) {
+    move_t move;
+    char lan[32];
+
+    move = create_move(A2, A4, W_PAWN, EMPTY, 0xF, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    to_lan(move, lan);
+    TEST_ASSERT_EQUAL_STRING("a2a4", &lan);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_create_move);
+    RUN_TEST(test_to_lan);
     return UNITY_END();
 }

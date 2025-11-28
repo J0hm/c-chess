@@ -4,7 +4,8 @@
 #include "util.h"
 
 move_t create_move(Square from, Square to, PieceType moved, PieceType captured,
-                   uint8_t castling, uint8_t flags) {
+                   uint8_t castling, uint8_t flags)
+{
     move_t move = {0};
     MOVE32_SET_SRC(move.move32, from);
     MOVE32_SET_DST(move.move32, to);
@@ -16,7 +17,8 @@ move_t create_move(Square from, Square to, PieceType moved, PieceType captured,
     return move;
 }
 
-void print_move(move_t move) {
+void print_move(move_t move)
+{
     printf(
         "%s %s -> %s (%s), castling 0x%x, flags 0x%x, "
         "rating %d\n",
@@ -28,6 +30,52 @@ void print_move(move_t move) {
         move.rating);
 }
 
-void to_lan(move_t move, char *buffer) {
-    
+void to_lan(move_t move, char *buffer)
+{
+    uint32_t m = move.move32;
+
+    int dest = m & 0x3F;
+    int orig = (m >> 6) & 0x3F;
+    int flags = (m >> 12) & 0xF;
+
+    char orig_file = 'a' + (orig & 7);
+    char orig_rank = '1' + (orig >> 3);
+    char dest_file = 'a' + (dest & 7);
+    char dest_rank = '1' + (dest >> 3);
+
+    int pos = 0;
+
+    buffer[pos++] = orig_file;
+    buffer[pos++] = orig_rank;
+
+    if (flags & 0x4)
+    {
+        buffer[pos++] = 'x';
+    }
+
+    buffer[pos++] = dest_file;
+    buffer[pos++] = dest_rank;
+
+    if (flags & 0x8)
+    {
+        buffer[pos++] = '=';
+        int promo_type = flags & 0x3;
+        switch (promo_type)
+        {
+        case 0:
+            buffer[pos++] = 'N';
+            break;
+        case 1:
+            buffer[pos++] = 'B';
+            break;
+        case 2:
+            buffer[pos++] = 'R';
+            break;
+        case 3:
+            buffer[pos++] = 'Q';
+            break;
+        }
+    }
+
+    buffer[pos] = '\0';
 }
