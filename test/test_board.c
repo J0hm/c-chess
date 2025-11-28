@@ -1,15 +1,18 @@
 #include "board.h"
 #include "unity.h"
 
-void setUp(void) {
+void setUp(void)
+{
     // set stuff up here
 }
 
-void tearDown(void) {
+void tearDown(void)
+{
     // clean stuff up here
 }
 
-void test_init(void) {
+void test_init(void)
+{
     board_t board;
     init_board(&board);
 
@@ -40,9 +43,9 @@ void test_init(void) {
 
     // test occupied bitboards
     TEST_ASSERT_EQUAL_UINT64(0x000000000000FFFFULL,
-                             board.occupied[0]);  // White occupied (ranks 1-2)
+                             board.occupied[0]); // White occupied (ranks 1-2)
     TEST_ASSERT_EQUAL_UINT64(0xFFFF000000000000ULL,
-                             board.occupied[1]);  // Black occupied (ranks 7-8)
+                             board.occupied[1]); // Black occupied (ranks 7-8)
 
     // test squares array for starting position
     // Rank 1 (White back rank)
@@ -56,18 +59,21 @@ void test_init(void) {
     TEST_ASSERT_EQUAL_UINT8(W_ROOK, board.squares[H1]);
 
     // Rank 2 (White pawns)
-    for (int i = 8; i < 16; i++) {
-        TEST_ASSERT_EQUAL_UINT8(W_PAWN, board.squares[i]);  // A2-H2
+    for (int i = 8; i < 16; i++)
+    {
+        TEST_ASSERT_EQUAL_UINT8(W_PAWN, board.squares[i]); // A2-H2
     }
 
     // Ranks 3-6 (Empty squares)
-    for (int i = 16; i < 48; i++) {
-        TEST_ASSERT_EQUAL_UINT8(EMPTY, board.squares[i]);  // Empty squares
+    for (int i = 16; i < 48; i++)
+    {
+        TEST_ASSERT_EQUAL_UINT8(EMPTY, board.squares[i]); // Empty squares
     }
 
     // Rank 7 (Black pawns)
-    for (int i = 48; i < 56; i++) {
-        TEST_ASSERT_EQUAL_UINT8(B_PAWN, board.squares[i]);  // A7-H7
+    for (int i = 48; i < 56; i++)
+    {
+        TEST_ASSERT_EQUAL_UINT8(B_PAWN, board.squares[i]); // A7-H7
     }
 
     // Rank 8 (Black back rank)
@@ -81,7 +87,8 @@ void test_init(void) {
     TEST_ASSERT_EQUAL_UINT8(B_ROOK, board.squares[H8]);
 }
 
-void test_set_fen(void) {
+void test_set_fen(void)
+{
     board_t board;
     init_board(&board);
     int ret = 0;
@@ -313,9 +320,10 @@ void test_set_fen(void) {
     TEST_ASSERT_EQUAL_UINT64(0x1000000000000000ULL, board.pcbb[B_KING]);
 }
 
-void test_bb_equals(void) {
+void test_bb_equals(void)
+{
     board_t board1, board2;
-    board_t* board_ptr;
+    board_t *board_ptr;
     init_board(&board1);
     init_board(&board2);
     TEST_ASSERT_TRUE(board_equal_hash(&board1, &board2));
@@ -342,7 +350,8 @@ void test_bb_equals(void) {
     TEST_ASSERT_TRUE(board_equal_bb(&board1, board_ptr));
 }
 
-void test_bb_clone(void) {
+void test_bb_clone(void)
+{
     board_t board1, board2;
     init_board(&board1);
     board_clone(&board1, &board2);
@@ -359,7 +368,8 @@ void test_bb_clone(void) {
     TEST_ASSERT_TRUE(board_equal_bb(&board1, &board2));
 }
 
-void test_make_unmake(void) {
+void test_make_unmake(void)
+{
     board_t board_base, board_test;
     move_t move;
     init_board(&board_base);
@@ -388,12 +398,54 @@ void test_make_unmake(void) {
     TEST_ASSERT_TRUE(board_equal_bb(&board_test, &board_base));
 }
 
-int main(void) {
+// TODO further testing for LAN make/unmake
+void test_make_lan(void)
+{
+    board_t board_base, board_test;
+    move_t move;
+
+#define ABEQ                                                          \
+    {                                                                 \
+        TEST_ASSERT_TRUE(board_equal_hash(&board_test, &board_base)); \
+        TEST_ASSERT_TRUE(board_equal_bb(&board_test, &board_base));   \
+    }
+
+    init_board(&board_base);
+    init_board(&board_test);
+    ABEQ;
+
+    move = create_move(E2, E3, W_PAWN, EMPTY, 0, 0);
+    make_move(&board_base, move);
+    make_move_lan(&board_test, "e2e3");
+    ABEQ;
+
+    unmake_move(&board_base);
+    unmake_move(&board_test);
+    ABEQ;
+
+    make_move(&board_base, move);
+    make_move_lan(&board_test, "e2e3");
+    ABEQ;
+
+    move = create_move(E7, E5, B_PAWN, EMPTY, 0, MOVE_FLAG_DOUBLE_PAWN_PUSH);
+    make_move(&board_base, move);
+    make_move_lan(&board_test, "e7e5");
+    ABEQ;
+
+    move = create_move(E3, E4, W_PAWN, EMPTY, 0, 0);
+    make_move(&board_base, move);
+    make_move_lan(&board_test, "e3e4");
+    ABEQ;
+}
+
+int main(void)
+{
     UNITY_BEGIN();
     RUN_TEST(test_init);
     RUN_TEST(test_set_fen);
     RUN_TEST(test_bb_equals);
     RUN_TEST(test_bb_clone);
     RUN_TEST(test_make_unmake);
+    RUN_TEST(test_make_lan);
     return UNITY_END();
 }

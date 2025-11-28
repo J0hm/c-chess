@@ -111,6 +111,12 @@ int board_clone(board_t *dest, board_t *src);
 /// @return 0 on success
 int make_move(board_t *board, move_t move);
 
+/// @brief Makes a move on the board from a LAN string. Does not check for legality!
+/// @param board
+/// @param move
+/// @return 0 on success
+int make_move_lan(board_t *board, char *move);
+
 /// @brief Un-makes a move on the board
 /// @param board
 /// @param move

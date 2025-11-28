@@ -22,3 +22,4 @@
 - ~~unmakeMove~~
 - ~~perft testing - isolate spots where movegen is off~~
 - move.c: better testing for to_lan
+- board.c: better testing for make_move_lan

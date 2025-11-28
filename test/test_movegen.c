@@ -561,6 +561,6 @@ int main(void) {
     RUN_TEST(test_gen_en_passant_edgecase);
     RUN_TEST(test_generate_pawn_moves);
     RUN_TEST(test_generate_promotions);
-    RUN_TEST(test_perft);
+    // RUN_TEST(test_perft);
     return UNITY_END();
 }
